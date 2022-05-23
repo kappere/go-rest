@@ -1,0 +1,9 @@
+Config:
+  Debug: false
+  # Redis:
+  #   Host: localhost
+  #   Port: 6379
+  #   Password:
+  # Database:
+  #   Type: mysql
+  #   Dsn: root:@(localhost:3306)/test?charset=utf8&parseTime=True&loc=Local

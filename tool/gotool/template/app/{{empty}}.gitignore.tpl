@@ -1,0 +1,4 @@
+*.log
+*.exe
+*.gz
+*.tar

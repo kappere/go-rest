@@ -1,0 +1,66 @@
+# 应用默认配置
+Config:
+  # 应用名称
+  AppName: app
+  # 环境配置
+  Profile: prod
+  # 启动端口
+  Port: 80
+  # 外部配置文件，未设置则默认检查并读取当前目录config.yaml（仅该文件不存在则不读取）
+  ConfigFile:
+  # 日志配置
+  Log:
+    # 日志路径，按照时间拆分日志文件
+    Path: log/app
+    # 保存天数，-1永久保存
+    SaveDays: -1
+  # gin的debug配置
+  Debug: false
+  # session配置
+  Session:
+    # 存储类型：memory/redis/cookie
+    StoreType: memory
+    Name: sessionid
+    Domain:
+    Path: /
+    Secure: false
+    HttpOnly: true
+    # 有效期1个月
+    MaxAge: 2592000
+    # 参照http.SameSite
+    SameSite: 1
+  # 限流
+  PeriodLimit:
+    # 默认关闭
+    Enable: false
+    # 滑动窗口大小（秒）
+    Period: 5
+    # 窗口中单个资源最大请求数
+    Quota: 100
+  # redis配置，默认为空
+  Redis:
+    Host: localhost
+    Port: 6379
+    Password:
+  # 数据库配置，默认为空
+  Database:
+    Type: mysql
+    Dsn: root:@(localhost:3306)/test?charset=utf8&parseTime=True&loc=Local
+    # 0-panic 1-fatal 2-error 3-warn 4-info 5-debug
+    LogLevel: 4
+  # oauth2服务端配置，通过中间件的形式引入
+  OAuth2:
+    Enable: false
+    Expire: 7200
+    TokenUri: /token
+  # RPC服务配置，不同服务配置相同token才能互相访问
+  Rpc:
+    Token: abcdef123645
+    Type: kubernetes
+    Kubernetes:
+      Namespace: default
+      # service代理地址，仅集群外部使用。key: app名称, value: 代理地址，*表示默认代理
+      Proxy:
+        "*": http://127.0.0.1:8080/api/v1/namespaces/{namespace}/services/http:{app}:/proxy
+      # 命名端口名称，默认http
+      PortName: http
