@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"wataru.com/go-rest/core/logger"
-	gorest_redis "wataru.com/go-rest/core/redis"
+	"github.com/kappere/go-rest/core/logger"
+	gorest_redis "github.com/kappere/go-rest/core/redis"
 )
 
 const (

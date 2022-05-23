@@ -3,10 +3,10 @@ package api
 import (
 	"gorm.io/driver/mysql"
 	"{{.fullprojectname}}/config"
-	"wataru.com/go-rest/core/middleware"
-	"wataru.com/go-rest/core/rest"
-	"wataru.com/go-rest/core/rpc"
-	"wataru.com/go-rest/core/server"
+	"github.com/kappere/go-rest/core/middleware"
+	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rpc"
+	"github.com/kappere/go-rest/core/server"
 )
 
 // 静态资源文件

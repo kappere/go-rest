@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	"github.com/kappere/go-rest/core/rest"
 	"github.com/mattn/go-isatty"
-	"wataru.com/go-rest/core/rest"
 )
 
 type LogFormatterParams struct {

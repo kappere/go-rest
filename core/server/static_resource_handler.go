@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 func staticResourceHandler(engine *rest.Engine, staticResourceConf *rest.StaticResourceConfig) {

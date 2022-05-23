@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
 )
 
 // Db 实例

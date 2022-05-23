@@ -2,8 +2,8 @@ package rpc
 
 import (
 	"github.com/gin-gonic/gin"
-	"wataru.com/go-rest/core/middleware"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/middleware"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 const (

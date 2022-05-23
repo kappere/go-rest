@@ -12,8 +12,8 @@
 package task
 
 import (
+	"github.com/kappere/go-rest/core/logger"
 	"github.com/robfig/cron"
-	"wataru.com/go-rest/core/logger"
 )
 
 type Task interface {

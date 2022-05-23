@@ -9,8 +9,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 func NiceRecovery() rest.HandlerFunc {

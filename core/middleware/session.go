@@ -7,8 +7,8 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/memstore"
 	ginredis "github.com/gin-contrib/sessions/redis"
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 // SessionMiddleware session中间件，详见https://github.com/gin-contrib/sessions

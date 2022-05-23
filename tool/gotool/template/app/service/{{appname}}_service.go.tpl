@@ -2,8 +2,8 @@ package service
 
 import (
 	"{{.fullprojectname}}/model"
-	"wataru.com/go-rest/core/db"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/db"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 func Get{{.Appname}}(c *rest.Context) *rest.Resp {

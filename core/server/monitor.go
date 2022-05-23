@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"wataru.com/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/logger"
 )
 
 func setupMonitor() {

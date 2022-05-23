@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 func abs(v int64) int64 {

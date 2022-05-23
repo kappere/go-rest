@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 // LogLevel log level

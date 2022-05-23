@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"{{.fullprojectname}}/service"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 func Get{{.Appname}}Handler() rest.HandlerFunc {

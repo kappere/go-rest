@@ -22,8 +22,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 var rpcConf *rest.RpcConfig

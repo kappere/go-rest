@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 // PeriodLimit 分布式限流中间件

@@ -20,13 +20,13 @@ import (
 	"time"
 
 	"github.com/go-oauth2/oauth2/server"
+	"github.com/kappere/go-rest/core/db"
+	"github.com/kappere/go-rest/core/rest"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/generates"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gorm.io/gorm"
-	"wataru.com/go-rest/core/db"
-	"wataru.com/go-rest/core/rest"
 )
 
 const (

@@ -13,13 +13,13 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"wataru.com/go-rest/core/db"
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/middleware"
-	"wataru.com/go-rest/core/redis"
-	"wataru.com/go-rest/core/rest"
-	"wataru.com/go-rest/core/rpc"
-	"wataru.com/go-rest/core/task"
+	"github.com/kappere/go-rest/core/db"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/middleware"
+	"github.com/kappere/go-rest/core/redis"
+	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rpc"
+	"github.com/kappere/go-rest/core/task"
 )
 
 var GinEngine *rest.Engine

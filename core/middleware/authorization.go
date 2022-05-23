@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 // AuthorizationMiddleware 权限校验 authFunc鉴权函数，返回值：是否有权限，failCallback无权限时的回调

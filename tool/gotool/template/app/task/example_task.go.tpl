@@ -14,8 +14,8 @@ package task
 
 /*
 import (
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/task"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/task"
 )
 
 // task with function

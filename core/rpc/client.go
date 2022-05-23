@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"wataru.com/go-rest/core/logger"
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/logger"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 var rpcConf *rest.RpcConfig

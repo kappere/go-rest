@@ -1,4 +1,4 @@
-module wataru.com/go-rest
+module github.com/kappere/go-rest
 
 go 1.18
 

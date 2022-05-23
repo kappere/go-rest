@@ -3,7 +3,7 @@ package config
 import (
 	"embed"
 
-	"wataru.com/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/rest"
 )
 
 type Config struct {

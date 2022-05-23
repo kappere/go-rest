@@ -1,3 +1,3 @@
-module wataru.com/go-rest/tool/gotool
+module github.com/kappere/go-rest/tool/gotool
 
 go 1.18
