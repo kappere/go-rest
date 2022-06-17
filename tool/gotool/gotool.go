@@ -152,6 +152,7 @@ func cmdApp(args []string) {
 	model["empty"] = ""
 	model["appname"] = appname
 	model["Appname"] = underscore2camel(appname)
+	model["appname_"] = strings.ReplaceAll(appname, "-", "_")
 	model["projectname"] = projectname
 	model["fullprojectname"] = fullProjectname
 

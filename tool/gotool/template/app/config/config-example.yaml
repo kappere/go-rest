@@ -2,11 +2,11 @@
 Config:
   # 应用名称
   AppName: app
-  # 环境配置
+  # 环境配置，可以通过命令行参数--profile=prod指定
   Profile: prod
-  # 启动端口
+  # 启动端口，可以通过命令行参数--port=80指定
   Port: 80
-  # 外部配置文件，未设置则默认检查并读取当前目录config.yaml（仅该文件不存在则不读取）
+  # 外部配置文件，未设置则默认检查并读取当前目录config.yaml（仅该文件不存在则不读取），可以通过命令行参数--config=config.yaml指定
   ConfigFile:
   # 日志配置
   Log:

@@ -95,3 +95,15 @@ func (t Date) MarshalJSON() ([]byte, error) {
 func (t Date) String() string {
 	return time.Time(t).Format(DATE_FORMAT)
 }
+
+func FormatTime(t time.Time, format string) string {
+	return time.Time(t).Format(format)
+}
+
+func GetTime(t string, format string) time.Time {
+	tm, err := time.ParseInLocation(format, t, time.Local)
+	if err != nil {
+		panic(err)
+	}
+	return time.Time(tm)
+}

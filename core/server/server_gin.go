@@ -92,9 +92,13 @@ func setupComponent(conf *rest.Config) func() {
 	// 初始化日志配置
 	logger.Setup(&conf.Log, logger.InfoLevel, logger.ByDay, 60)
 
-	logger.Info("app: %s", conf.AppName)
-	logger.Info("system: %s", runtime.GOOS)
-	logger.Info("run in %s mode", conf.Profile)
+	logger.Info("===========================")
+	logger.Info("app     : %s", conf.AppName)
+	logger.Info("mode    : %s", conf.Profile)
+	logger.Info("runtime : %s", runtime.GOOS+"-"+runtime.GOARCH)
+	logger.Info("exec    : %s", os.Args[0])
+	logger.Info("logdir  : %s", conf.Log.Path)
+	logger.Info("===========================")
 
 	// 初始化Redis
 	redis.Setup(&conf.Redis)

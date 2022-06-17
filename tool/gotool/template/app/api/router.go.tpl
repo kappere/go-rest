@@ -1,12 +1,11 @@
 package api
 
 import (
-	"gorm.io/driver/mysql"
-	"{{.fullprojectname}}/config"
-	"github.com/kappere/go-rest/core/middleware"
 	"github.com/kappere/go-rest/core/rest"
 	"github.com/kappere/go-rest/core/rpc"
 	"github.com/kappere/go-rest/core/server"
+	"gorm.io/driver/mysql"
+	"{{.fullprojectname}}/config"
 )
 
 // 静态资源文件
@@ -33,5 +32,5 @@ func initRoute(engine *rest.Engine) {
 	// RPC服务间调用路由(POST)
 	rpc.Server(engine, &config.Conf.Rpc).
 		POST("/get{{.Appname}}", Get{{.Appname}}Handler())
-	// RPC调用：rpc.Service("{{.appname}}").Call("/get{{.Appname}}")
+	// RPC调用：rpc.Service("{{.appname}}").Call("/get{{.Appname}}", nil)
 }

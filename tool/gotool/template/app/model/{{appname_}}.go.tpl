@@ -8,7 +8,7 @@ type {{.Appname}} struct {
 }
 
 func ({{.Appname}}) TableName() string {
-	return "{{.appname}}"
+	return "{{.appname_}}"
 }
 func (u *{{.Appname}}) String() string {
 	return strconv.Itoa(*u.Id) + " " + *u.Name

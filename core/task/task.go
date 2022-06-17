@@ -12,6 +12,8 @@
 package task
 
 import (
+	"runtime"
+
 	"github.com/kappere/go-rest/core/logger"
 	"github.com/robfig/cron"
 )
@@ -25,7 +27,15 @@ var c = cron.New()
 func NewTask(cron string, name string, t Task) {
 	c.AddFunc(cron, func() {
 		defer func() {
-			logger.Info("==== Task [%s] finished ====", name)
+			if r := recover(); r != nil {
+				logger.Info("==== Task [%s] failed ====", name)
+				const size = 64 << 10
+				buf := make([]byte, size)
+				buf = buf[:runtime.Stack(buf, false)]
+				logger.Error("cron: panic running job: %v\n%s", r, buf)
+			} else {
+				logger.Info("==== Task [%s] finished ====", name)
+			}
 		}()
 		logger.Info("==== Task [%s] start ====", name)
 		t.Process()
@@ -35,7 +45,15 @@ func NewTask(cron string, name string, t Task) {
 func NewTaskFunc(cron string, name string, t func()) {
 	c.AddFunc(cron, func() {
 		defer func() {
-			logger.Info("==== Task [%s] finished ====", name)
+			if r := recover(); r != nil {
+				logger.Info("==== Task [%s] failed ====", name)
+				const size = 64 << 10
+				buf := make([]byte, size)
+				buf = buf[:runtime.Stack(buf, false)]
+				logger.Error("cron: panic running job: %v\n%s", r, buf)
+			} else {
+				logger.Info("==== Task [%s] finished ====", name)
+			}
 		}()
 		logger.Info("==== Task [%s] start ====", name)
 		t()

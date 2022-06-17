@@ -7,7 +7,7 @@ import (
 )
 
 func Get{{.Appname}}(c *rest.Context) *rest.Resp {
-	{{.appname}} := model.{{.Appname}}{}
-	db.Db.Take(&{{.appname}}, 1)
-	return rest.Success({{.appname}})
+	{{.appname_}} := model.{{.Appname}}{}
+	db.Db.Take(&{{.appname_}}, 1)
+	return rest.Success({{.appname_}})
 }
