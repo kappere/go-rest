@@ -2,3 +2,4 @@
 *.exe
 *.gz
 *.tar
+.vscode/

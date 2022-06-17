@@ -4,3 +4,4 @@
 *.tar
 go.sum
 vendor/
+.vscode/
