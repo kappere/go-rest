@@ -29,20 +29,13 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	SQL_SELECT_CLIENT = "select client_id as id, client_secret as secret from oauth_client_details "
-	SQL_SELECT_TOKEN  = "select "
-	TABLE_CLIENT      = "oauth_client_details"
-	TABLE_TOKEN       = "oauth_access_token"
-)
-
 type DbClientStore struct {
 	Db *gorm.DB
 }
 
 func (store *DbClientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	var client OauthClientDetails
-	store.Db.Table(TABLE_CLIENT).Where("id = ?", id).Take(&client)
+	store.Db.Where("id = ?", id).Take(&client)
 	if client.ID == "" {
 		return nil, nil
 	}
@@ -59,43 +52,47 @@ func (store *DbTokenStore) Create(info oauth2.TokenInfo) error {
 	store.TokenMutex.Lock()
 	defer store.TokenMutex.Unlock()
 	var token OauthAccessToken
-	r := store.Db.Table(TABLE_TOKEN).Where("client_id = ?", info.GetClientID()).Take(&token)
-	if r.Error == nil {
-		store.Db.Table(TABLE_TOKEN).Where("client_id = ?", info.GetClientID()).Update("access", info.GetAccess())
-	} else if r.Error != nil && r.Error.Error() == "record not found" {
+	r := store.Db.Where("client_id = ?", info.GetClientID()).Take(&token)
+	if r.Error == nil && r.RowsAffected >= 1 {
+		now := time.Now()
+		store.Db.Model(&OauthAccessToken{}).
+			Where("client_id = ?", info.GetClientID()).
+			Updates(OauthAccessToken{
+				Access:         info.GetAccess(),
+				AccessCreateAt: &now,
+			})
+	} else {
 		oauthToken := newOauthAccessToken(info)
-		r := store.Db.Table(TABLE_TOKEN).Create(&oauthToken)
+		r := store.Db.Create(&oauthToken)
 		if r.Error != nil {
 			return r.Error
 		}
-	} else {
-		return r.Error
 	}
 	return nil
 }
 
 // delete the authorization code
 func (store *DbTokenStore) RemoveByCode(code string) error {
-	store.Db.Table(TABLE_TOKEN).Where("code = ?", code).Delete(&OauthAccessToken{})
-	return nil
+	r := store.Db.Where("code = ?", code).Delete(&OauthAccessToken{})
+	return r.Error
 }
 
 // use the access token to delete the token information
 func (store *DbTokenStore) RemoveByAccess(access string) error {
-	store.Db.Table(TABLE_TOKEN).Where("access = ?", access).Delete(&OauthAccessToken{})
-	return nil
+	r := store.Db.Where("access = ?", access).Delete(&OauthAccessToken{})
+	return r.Error
 }
 
 // use the refresh token to delete the token information
 func (store *DbTokenStore) RemoveByRefresh(refresh string) error {
-	store.Db.Table(TABLE_TOKEN).Where("refresh = ?", refresh).Delete(&OauthAccessToken{})
-	return nil
+	r := store.Db.Where("refresh = ?", refresh).Delete(&OauthAccessToken{})
+	return r.Error
 }
 
 // use the authorization code for token information data
 func (store *DbTokenStore) GetByCode(code string) (oauth2.TokenInfo, error) {
 	var token OauthAccessToken
-	r := store.Db.Table(TABLE_TOKEN).Where("code = ?", code).Take(&token)
+	r := store.Db.Where("code = ?", code).Take(&token)
 	if r.Error != nil {
 		return nil, nil
 	}
@@ -105,7 +102,7 @@ func (store *DbTokenStore) GetByCode(code string) (oauth2.TokenInfo, error) {
 // use the access token for token information data
 func (store *DbTokenStore) GetByAccess(access string) (oauth2.TokenInfo, error) {
 	var token OauthAccessToken
-	r := store.Db.Table(TABLE_TOKEN).Where("access = ?", access).Take(&token)
+	r := store.Db.Where("access = ?", access).Take(&token)
 	if r.Error != nil {
 		return nil, nil
 	}
@@ -113,7 +110,14 @@ func (store *DbTokenStore) GetByAccess(access string) (oauth2.TokenInfo, error) 
 }
 
 // use the refresh token for token information data
-func (store *DbTokenStore) GetByRefresh(refresh string) (oauth2.TokenInfo, error) { return nil, nil }
+func (store *DbTokenStore) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
+	var token OauthAccessToken
+	r := store.Db.Where("refresh = ?", refresh).Take(&token)
+	if r.Error != nil {
+		return nil, nil
+	}
+	return newModelsToken(&token), nil
+}
 
 func OAuth2ClientTokenMiddleware(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.HandlerFunc {
 	if db.Db == nil {
@@ -138,14 +142,19 @@ func OAuth2ClientTokenMiddleware(oauth2Conf *rest.OAuth2Config, engine *rest.Eng
 	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 	engine.GET(oauth2Conf.TokenUri, func(c *rest.Context) {
-		grantType, tokenGenerateRequest, err := srv.ValidationTokenRequest(c.Request)
+		grantType, tgr, err := srv.ValidationTokenRequest(c.Request)
 		if err != nil {
 			errorToken(c, srv, err)
 			c.Abort()
 			return
 		}
 
-		tokenInfo, err := srv.GetAccessToken(grantType, tokenGenerateRequest)
+		client, err := srv.Manager.GetClient(tgr.ClientID)
+		if err == nil {
+			tgr.UserID = client.GetUserID()
+		}
+
+		tokenInfo, err := srv.GetAccessToken(grantType, tgr)
 		if err != nil {
 			errorToken(c, srv, err)
 			c.Abort()
@@ -155,12 +164,15 @@ func OAuth2ClientTokenMiddleware(oauth2Conf *rest.OAuth2Config, engine *rest.Eng
 		c.JSON(http.StatusOK, rest.Success(srv.GetTokenData(tokenInfo)))
 	})
 	return func(c *rest.Context) {
-		err := srv.HandleAuthorizeRequest(c.Writer, c.Request)
+		tokenInfo, err := srv.ValidationBearerToken(c.Request)
 		if err != nil {
 			c.JSON(http.StatusOK, rest.ErrorWithCode(err.Error(), rest.STATUS_NO_AUTHORIZATION))
 			c.Abort()
 			return
 		}
+		// add oauth info to context
+		c.Set("oauth_client_id", tokenInfo.GetClientID())
+		c.Set("oauth_user_id", tokenInfo.GetUserID())
 		c.Next()
 	}
 }
@@ -176,6 +188,10 @@ type OauthClientDetails struct {
 	Secret string
 	Domain string
 	UserID string
+}
+
+func (OauthClientDetails) TableName() string {
+	return "oauth_client_details"
 }
 
 // GetID client id
@@ -200,35 +216,29 @@ func (c *OauthClientDetails) GetUserID() string {
 
 // OauthAccessToken token model
 type OauthAccessToken struct {
-	ClientID         *string
-	UserID           *string
-	RedirectURI      *string
-	Scope            *string
-	Code             *string
+	ClientID         string
+	UserID           string
+	RedirectURI      string
+	Scope            string
+	Code             string
 	CodeCreateAt     *time.Time
-	CodeExpiresIn    *time.Duration
-	Access           *string
+	CodeExpiresIn    time.Duration
+	Access           string
 	AccessCreateAt   *time.Time
-	AccessExpiresIn  *time.Duration
-	Refresh          *string
+	AccessExpiresIn  time.Duration
+	Refresh          string
 	RefreshCreateAt  *time.Time
-	RefreshExpiresIn *time.Duration
+	RefreshExpiresIn time.Duration
+}
+
+func (OauthAccessToken) TableName() string {
+	return "oauth_access_token"
 }
 
 func newOauthAccessToken(info oauth2.TokenInfo) *OauthAccessToken {
-	ClientID := info.GetClientID()
-	UserID := info.GetUserID()
-	RedirectURI := info.GetRedirectURI()
-	Scope := info.GetScope()
-	Code := info.GetCode()
 	CodeCreateAt := info.GetCodeCreateAt()
-	CodeExpiresIn := info.GetCodeExpiresIn()
-	Access := info.GetAccess()
 	AccessCreateAt := info.GetAccessCreateAt()
-	AccessExpiresIn := info.GetAccessExpiresIn()
-	Refresh := info.GetRefresh()
 	RefreshCreateAt := info.GetRefreshCreateAt()
-	RefreshExpiresIn := info.GetRefreshExpiresIn()
 
 	var PCodeCreateAt *time.Time = nil
 	if CodeCreateAt.Nanosecond() > 0 {
@@ -245,19 +255,19 @@ func newOauthAccessToken(info oauth2.TokenInfo) *OauthAccessToken {
 		PRefreshCreateAt = &RefreshCreateAt
 	}
 	return &OauthAccessToken{
-		ClientID:         &ClientID,
-		UserID:           &UserID,
-		RedirectURI:      &RedirectURI,
-		Scope:            &Scope,
-		Code:             &Code,
+		ClientID:         info.GetClientID(),
+		UserID:           info.GetUserID(),
+		RedirectURI:      info.GetRedirectURI(),
+		Scope:            info.GetScope(),
+		Code:             info.GetCode(),
 		CodeCreateAt:     PCodeCreateAt,
-		CodeExpiresIn:    &CodeExpiresIn,
-		Access:           &Access,
+		CodeExpiresIn:    info.GetCodeExpiresIn() / time.Second,
+		Access:           info.GetAccess(),
 		AccessCreateAt:   PAccessCreateAt,
-		AccessExpiresIn:  &AccessExpiresIn,
-		Refresh:          &Refresh,
+		AccessExpiresIn:  info.GetAccessExpiresIn() / time.Second,
+		Refresh:          info.GetRefresh(),
 		RefreshCreateAt:  PRefreshCreateAt,
-		RefreshExpiresIn: &RefreshExpiresIn,
+		RefreshExpiresIn: info.GetRefreshExpiresIn() / time.Second,
 	}
 }
 
@@ -275,18 +285,18 @@ func newModelsToken(token *OauthAccessToken) oauth2.TokenInfo {
 		RefreshCreateAt = *token.RefreshCreateAt
 	}
 	return &models.Token{
-		ClientID:         *token.ClientID,
-		UserID:           *token.UserID,
-		RedirectURI:      *token.RedirectURI,
-		Scope:            *token.Scope,
-		Code:             *token.Code,
+		ClientID:         token.ClientID,
+		UserID:           token.UserID,
+		RedirectURI:      token.RedirectURI,
+		Scope:            token.Scope,
+		Code:             token.Code,
 		CodeCreateAt:     CodeCreateAt,
-		CodeExpiresIn:    *token.CodeExpiresIn,
-		Access:           *token.Access,
+		CodeExpiresIn:    token.CodeExpiresIn * time.Second,
+		Access:           token.Access,
 		AccessCreateAt:   AccessCreateAt,
-		AccessExpiresIn:  *token.AccessExpiresIn,
-		Refresh:          *token.Refresh,
+		AccessExpiresIn:  token.AccessExpiresIn * time.Second,
+		Refresh:          token.Refresh,
 		RefreshCreateAt:  RefreshCreateAt,
-		RefreshExpiresIn: *token.RefreshExpiresIn,
+		RefreshExpiresIn: token.RefreshExpiresIn * time.Second,
 	}
 }
