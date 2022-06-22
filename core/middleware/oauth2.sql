@@ -3,7 +3,8 @@ CREATE TABLE `oauth_client_details` (
   `secret` varchar(255) NOT NULL COMMENT 'client secret',
   `domain` varchar(255) DEFAULT NULL COMMENT 'domain',
   `user_id` varchar(255) DEFAULT NULL COMMENT 'user id',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
 ) COMMENT='oauth2 client details';
 
 CREATE TABLE `oauth_access_token` (
@@ -20,5 +21,6 @@ CREATE TABLE `oauth_access_token` (
   `refresh` varchar(255) DEFAULT NULL COMMENT 'refresh',
   `refresh_create_at` varchar(255) DEFAULT NULL COMMENT 'refresh create at',
   `refresh_expires_in` varchar(255) DEFAULT NULL COMMENT 'refresh expires in',
-  PRIMARY KEY (`client_id`)
+  PRIMARY KEY (`client_id`),
+  KEY `idx_access` (`access`)
 ) COMMENT='oauth2 access token';

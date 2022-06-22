@@ -1,5 +1,3 @@
-// 只是一个定时任务的例子（参照用），创建项目后请删除该文件
-//
 // 使用文档：https://pkg.go.dev/github.com/robfig/cron
 // Field name   | Mandatory? | Allowed values  | Allowed special characters
 // ----------   | ---------- | --------------  | --------------------------

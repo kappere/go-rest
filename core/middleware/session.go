@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"strconv"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/memstore"
@@ -19,7 +17,7 @@ func SessionMiddleware(conf *rest.Config) rest.HandlerFunc {
 	} else if conf.Session.StoreType == rest.CACHE_TYPE_COOKIE {
 		store = cookie.NewStore([]byte("secret"))
 	} else if conf.Session.StoreType == rest.CACHE_TYPE_REDIS {
-		s, err := ginredis.NewStore(10, "tcp", conf.Redis.Host+":"+strconv.Itoa(conf.Redis.Port), conf.Redis.Password, []byte("secret"))
+		s, err := ginredis.NewStore(10, "tcp", conf.Redis.Addr, conf.Redis.Password, []byte("secret"))
 		if err != nil {
 			panic(err)
 		}

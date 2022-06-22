@@ -14,8 +14,8 @@ import (
 )
 
 // PeriodLimit 分布式限流中间件
-func PeriodLimitMiddleware(period int, quota int, limitStore *redis.Client, keyPrefix string, opts ...PeriodOption) rest.HandlerFunc {
-	limit := newPeriodLimit(period, quota, limitStore, keyPrefix)
+func PeriodLimitMiddleware(period int, quota int, limitStore *redis.Client, clusterLimitStore *redis.ClusterClient, keyPrefix string, opts ...PeriodOption) rest.HandlerFunc {
+	limit := newPeriodLimit(period, quota, limitStore, clusterLimitStore, keyPrefix)
 	return func(c *rest.Context) {
 		r, err := limit.take(c.Request.RequestURI)
 		if err != nil {
@@ -72,22 +72,24 @@ type (
 
 	// A PeriodLimit is used to limit requests during a period of time.
 	PeriodLimit struct {
-		period     int
-		quota      int
-		limitStore *redis.Client
-		keyPrefix  string
-		align      bool
+		period            int
+		quota             int
+		limitStore        *redis.Client
+		clusterLimitStore *redis.ClusterClient
+		keyPrefix         string
+		align             bool
 	}
 )
 
 // newPeriodLimit returns a PeriodLimit with given parameters.
-func newPeriodLimit(period, quota int, limitStore *redis.Client, keyPrefix string,
+func newPeriodLimit(period, quota int, limitStore *redis.Client, clusterLimitStore *redis.ClusterClient, keyPrefix string,
 	opts ...PeriodOption) *PeriodLimit {
 	limiter := &PeriodLimit{
-		period:     period,
-		quota:      quota,
-		limitStore: limitStore,
-		keyPrefix:  keyPrefix,
+		period:            period,
+		quota:             quota,
+		limitStore:        limitStore,
+		clusterLimitStore: clusterLimitStore,
+		keyPrefix:         keyPrefix,
 	}
 
 	for _, opt := range opts {
@@ -99,10 +101,18 @@ func newPeriodLimit(period, quota int, limitStore *redis.Client, keyPrefix strin
 
 // Take requests a permit, it returns the permit state.
 func (h *PeriodLimit) take(key string) (int, error) {
-	resp := h.limitStore.Eval(context.Background(), PERIOD_SCRIPT, []string{h.keyPrefix + key},
-		strconv.Itoa(h.quota),
-		strconv.Itoa(h.calcExpireSeconds()),
-	)
+	var resp *redis.Cmd
+	if h.clusterLimitStore != nil {
+		resp = h.clusterLimitStore.Eval(context.Background(), PERIOD_SCRIPT, []string{h.keyPrefix + key},
+			strconv.Itoa(h.quota),
+			strconv.Itoa(h.calcExpireSeconds()),
+		)
+	} else {
+		resp = h.limitStore.Eval(context.Background(), PERIOD_SCRIPT, []string{h.keyPrefix + key},
+			strconv.Itoa(h.quota),
+			strconv.Itoa(h.calcExpireSeconds()),
+		)
+	}
 
 	code, err := resp.Int64()
 	if err != nil {

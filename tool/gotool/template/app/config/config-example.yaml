@@ -39,8 +39,8 @@ Config:
     Quota: 100
   # redis配置，默认为空
   Redis:
-    Host: localhost
-    Port: 6379
+    # 集群用半角逗号,分隔
+    Addr: localhost:6379
     Password:
   # 数据库配置，默认为空
   Database:

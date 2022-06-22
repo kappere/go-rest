@@ -12,6 +12,11 @@
 // 	ErrInvalidGrant:            401,
 // 	ErrUnsupportedGrantType:    401,
 // }
+//
+// 获取access token:
+// http://ip:port/token?grant_type=client_credentials&client_id=&client_secret=
+// 鉴权header：
+// Authorization: Bearer RK03KC9QPTSGD2OHZDU-WG
 package middleware
 
 import (
@@ -132,7 +137,7 @@ func OAuth2ClientTokenMiddleware(oauth2Conf *rest.OAuth2Config, engine *rest.Eng
 	manager.MapTokenStorage(&DbTokenStore{Db: db.Db, TokenMutex: sync.Mutex{}})
 	cfg := &manage.Config{
 		// 访问令牌过期时间（默认为2小时）
-		AccessTokenExp: time.Duration(oauth2Conf.Expire * int(time.Second)),
+		AccessTokenExp: time.Duration(oauth2Conf.Expire) * time.Second,
 		// RefreshTokenExp:   time.Duration(oauth2Conf.Expire * int(time.Second)),
 		// IsGenerateRefresh: true,
 	}
@@ -171,8 +176,8 @@ func OAuth2ClientTokenMiddleware(oauth2Conf *rest.OAuth2Config, engine *rest.Eng
 			return
 		}
 		// add oauth info to context
-		c.Set("oauth_client_id", tokenInfo.GetClientID())
-		c.Set("oauth_user_id", tokenInfo.GetUserID())
+		c.Set("oauth/client_id", tokenInfo.GetClientID())
+		c.Set("oauth/user_id", tokenInfo.GetUserID())
 		c.Next()
 	}
 }

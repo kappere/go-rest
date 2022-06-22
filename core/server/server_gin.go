@@ -116,10 +116,10 @@ func setupMiddleware(engine *rest.Engine, conf *rest.Config) {
 	engine.Use(middleware.NiceRecovery())
 	// 限流中间件
 	if conf.PeriodLimit.Enable {
-		if conf.Redis.Host == "" {
+		if redis.Rdb == nil && redis.ClusterRdb == nil {
 			panic("please config redis first")
 		}
-		engine.Use(middleware.PeriodLimitMiddleware(conf.PeriodLimit.Period, conf.PeriodLimit.Quota, redis.Rdb, "PERIODLIMIT"))
+		engine.Use(middleware.PeriodLimitMiddleware(conf.PeriodLimit.Period, conf.PeriodLimit.Quota, redis.Rdb, redis.ClusterRdb, "PERIODLIMIT"))
 	}
 	// 自定义日志格式
 	engine.Use(middleware.NiceLoggerFormatter(func(param middleware.LogFormatterParams) string {

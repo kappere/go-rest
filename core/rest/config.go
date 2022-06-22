@@ -44,8 +44,7 @@ type DatabaseConfig struct {
 }
 
 type RedisConfig struct {
-	Host     string `yaml:"Host"`
-	Port     int    `yaml:"Port"`
+	Addr     string `yaml:"Addr"`
 	Password string `yaml:"Password"`
 }
 

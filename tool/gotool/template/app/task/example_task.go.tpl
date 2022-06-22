@@ -1,4 +1,4 @@
-// 只是一个定时任务的例子（参照用），创建项目后请删除该文件
+// 定时任务示例
 //
 // 使用文档：https://pkg.go.dev/github.com/robfig/cron
 // Field name   | Mandatory? | Allowed values  | Allowed special characters
@@ -32,7 +32,7 @@ func (t *ExampleTask2) Process() {
 }
 
 func init() {
-	task.NewTaskFunc("0 0/1 * * * *", "ExampleTask1", RunExampleTask1)
-	task.NewTask("0 0/1 * * * *", "ExampleTask2", &ExampleTask2{})
+	task.NewTaskFunc("0 0/1 * * * ?", "ExampleTask1", RunExampleTask1)
+	task.NewTask("0 0/1 * * * ?", "ExampleTask2", &ExampleTask2{})
 }
 */
