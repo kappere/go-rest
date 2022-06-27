@@ -31,6 +31,7 @@ type RpcService struct {
 func InitClient(c *rest.RpcConfig) {
 	rpcConf = c
 
+	logger.Info("service type: %s", rpcConf.Type)
 	if rpcConf.Type == "kubernetes" {
 		if isInKubernetesCluster() {
 			logger.Info("in kubernetes")
@@ -49,10 +50,11 @@ func InitClient(c *rest.RpcConfig) {
 			}
 		} else {
 			logger.Info("out of kubernetes")
+			defaultProxyAddr := rpcConf.Kubernetes.Proxy["*"]
 			srvLookup = func(srvname string) *RpcService {
 				addr := rpcConf.Kubernetes.Proxy[srvname]
 				if addr == "" {
-					addr = rpcConf.Kubernetes.Proxy["*"]
+					addr = defaultProxyAddr
 				}
 				addr = strings.ReplaceAll(addr, "{namespace}", rpcConf.Kubernetes.Namespace)
 				addr = strings.ReplaceAll(addr, "{app}", srvname)
@@ -60,6 +62,18 @@ func InitClient(c *rest.RpcConfig) {
 					Name: srvname,
 					Addr: addr,
 				}
+			}
+		}
+	} else if rpcConf.Type == "IpProxy" {
+		defaultProxyAddr := rpcConf.IpProxy.Proxy["*"]
+		srvLookup = func(srvname string) *RpcService {
+			addr := rpcConf.IpProxy.Proxy[srvname]
+			if addr == "" {
+				addr = defaultProxyAddr
+			}
+			return &RpcService{
+				Name: srvname,
+				Addr: addr,
 			}
 		}
 	}

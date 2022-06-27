@@ -45,7 +45,7 @@ Config:
   # 数据库配置，默认为空
   Database:
     Type: mysql
-    Dsn: root:@(localhost:3306)/test?charset=utf8&parseTime=True&loc=Local
+    Dsn: root:@(localhost:3306)/test?charset=utf8mb4&parseTime=True&loc=Local
     # 0-panic 1-fatal 2-error 3-warn 4-info 5-debug
     LogLevel: 4
   # oauth2服务端配置，通过中间件的形式引入
@@ -56,7 +56,11 @@ Config:
   # RPC服务配置，不同服务配置相同token才能互相访问
   Rpc:
     Token: abcdef123645
-    Type: kubernetes
+    # 服务治理方式：IpProxy(默认), kubernetes
+    Type: IpProxy
+    IpProxy:
+      Proxy:
+        "*": http://127.0.0.1:8080
     Kubernetes:
       Namespace: default
       # service代理地址，仅集群外部使用。key: app名称, value: 代理地址，*表示默认代理

@@ -74,7 +74,12 @@ type OAuth2Config struct {
 type RpcConfig struct {
 	Token      string           `yaml:"Token"`
 	Type       string           `yaml:"Type"`
+	IpProxy    IpProxyConfig    `yaml:"IpProxy"`
 	Kubernetes KubernetesConfig `yaml:"Kubernetes"`
+}
+
+type IpProxyConfig struct {
+	Proxy map[string]string `yaml:"Proxy"`
 }
 
 type KubernetesConfig struct {
@@ -129,7 +134,13 @@ var defaultConf = MockConfig{
 		},
 		Rpc: RpcConfig{
 			Token: strconv.Itoa(rand.Int()),
-			Type:  "kubernetes",
+			// kubernetes IpProxy
+			Type: "IpProxy",
+			IpProxy: IpProxyConfig{
+				Proxy: map[string]string{
+					"*": "http://127.0.0.1:8080",
+				},
+			},
 			Kubernetes: KubernetesConfig{
 				Namespace: "default",
 				Proxy: map[string]string{
