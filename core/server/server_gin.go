@@ -140,7 +140,7 @@ func setupMiddleware(engine *rest.Engine, conf *rest.Config) {
 	engine.Use(requestid.New())
 
 	// 初始化session中间件
-	if sessionMiddleware := middleware.SessionMiddleware(conf); sessionMiddleware != nil {
+	if sessionMiddleware := middleware.Session(conf); sessionMiddleware != nil {
 		engine.Use(sessionMiddleware)
 	}
 

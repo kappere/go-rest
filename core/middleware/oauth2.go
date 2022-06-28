@@ -124,7 +124,7 @@ func (store *DbTokenStore) GetByRefresh(refresh string) (oauth2.TokenInfo, error
 	return newModelsToken(&token), nil
 }
 
-func OAuth2ClientTokenMiddleware(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.HandlerFunc {
+func OAuth2Client(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.HandlerFunc {
 	if db.Db == nil {
 		panic("database not inititialized")
 	}

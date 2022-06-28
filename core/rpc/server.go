@@ -11,5 +11,5 @@ const (
 )
 
 func Server(engine *rest.Engine, rpcConf *rest.RpcConfig) *gin.RouterGroup {
-	return engine.Group(RPC_PREFIX, middleware.RpcMiddleware(rpcConf))
+	return engine.Group(RPC_PREFIX, middleware.Rpc(rpcConf))
 }

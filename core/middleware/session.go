@@ -9,8 +9,8 @@ import (
 	"github.com/kappere/go-rest/core/rest"
 )
 
-// SessionMiddleware session中间件，详见https://github.com/gin-contrib/sessions
-func SessionMiddleware(conf *rest.Config) rest.HandlerFunc {
+// Session session中间件，详见https://github.com/gin-contrib/sessions
+func Session(conf *rest.Config) rest.HandlerFunc {
 	var store sessions.Store
 	if conf.Session.StoreType == rest.CACHE_TYPE_MEMORY {
 		store = memstore.NewStore([]byte("secret"))

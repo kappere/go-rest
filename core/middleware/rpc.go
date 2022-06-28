@@ -18,7 +18,7 @@ func abs(v int64) int64 {
 	return -v
 }
 
-func RpcMiddleware(rpcConf *rest.RpcConfig) rest.HandlerFunc {
+func Rpc(rpcConf *rest.RpcConfig) rest.HandlerFunc {
 	return func(c *rest.Context) {
 		rpc_token := c.GetHeader("inner_token_enc")
 		if rpc_token == "" {
