@@ -16,6 +16,15 @@
 // jwtGroup := engine.Group("/", middleware.JwtAuth(nil))
 // jwtGroup.GET("/demo", DemoHandler())
 //
+// 针对需要鉴权的文件下载，如果是POST，可以在文件下载接口生成一个短期的jwt拼接在url后返回；如果是GET，则正常下载
+// 前端示例（响应：{"url": "https://path.to/protected.file?jwt=xxxxx"}）：
+// function clickedOnDownloadButton() {
+// 	postToSignWithAuthorizationHeader({
+// 		url: 'https://path.to/protected.file'
+// 	}).then(function(resp) {
+// 		window.location = resp.url;
+// 	});
+// }
 package middleware
 
 import (
@@ -32,7 +41,7 @@ import (
 
 var (
 	// 私钥签发jwt
-	privateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, _ = rsa.GenerateKey(rand.Reader, 512)
 	// 公钥验证jwt
 	publicKey *rsa.PublicKey
 )
@@ -48,7 +57,15 @@ func JwtAuth(pubKey *rsa.PublicKey) rest.HandlerFunc {
 		publicKey = &privateKey.PublicKey
 	}
 	return BasicAuth(func(c *rest.Context) bool {
-		tokenString := strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Bearer ")
+		// 优先从url中获取token，其次从header中获取，从url中获取token是用于新窗口文件下载的需求
+		tokenString := c.Request.URL.Query().Get("jwt")
+		if tokenString == "" {
+			tokenString = strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Bearer ")
+		}
+		if tokenString == "" {
+			c.JSON(http.StatusOK, rest.ErrorWithCode("jwt token required", rest.STATUS_NO_AUTHENTICATION))
+			return false
+		}
 		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 			// Don't forget to validate the alg is what you expect:
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {

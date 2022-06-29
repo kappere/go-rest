@@ -9,6 +9,6 @@ import (
 
 func Get{{.Appname}}Handler() rest.HandlerFunc {
 	return func(c *rest.Context) {
-		c.JSON(http.StatusOK, service.Get{{.Appname}}(c))
+		c.JSON(http.StatusOK, service.{{.Appname}}.Get{{.Appname}}(c))
 	}
 }
