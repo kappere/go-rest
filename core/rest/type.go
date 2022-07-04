@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -78,6 +80,29 @@ func (t Time) String() string {
 	return time.Time(t).Format(TIME_FORMAT)
 }
 
+func (t *Time) Scan(src interface{}) error {
+	switch src := src.(type) {
+	case nil:
+		return nil
+	case string:
+		if src == "" {
+			return nil
+		}
+		tm, err := time.ParseInLocation(TIME_FORMAT, src, time.Local)
+		if err != nil {
+			return fmt.Errorf("Scan: %v", err)
+		}
+		*t = Time(tm)
+		return nil
+	default:
+		return fmt.Errorf("Scan: unable to scan type %T into rest.Time", src)
+	}
+}
+
+func (t Time) Value() (driver.Value, error) {
+	return time.Time(t).Format(TIME_FORMAT), nil
+}
+
 func (t *Date) UnmarshalJSON(data []byte) (err error) {
 	now, err := time.ParseInLocation(`"`+DATE_FORMAT+`"`, string(data), time.Local)
 	*t = Date(now)
@@ -94,6 +119,29 @@ func (t Date) MarshalJSON() ([]byte, error) {
 
 func (t Date) String() string {
 	return time.Time(t).Format(DATE_FORMAT)
+}
+
+func (t *Date) Scan(src interface{}) error {
+	switch src := src.(type) {
+	case nil:
+		return nil
+	case string:
+		if src == "" {
+			return nil
+		}
+		tm, err := time.ParseInLocation(DATE_FORMAT, src, time.Local)
+		if err != nil {
+			return fmt.Errorf("Scan: %v", err)
+		}
+		*t = Date(tm)
+		return nil
+	default:
+		return fmt.Errorf("Scan: unable to scan type %T into rest.Date", src)
+	}
+}
+
+func (t Date) Value() (driver.Value, error) {
+	return time.Time(t).Format(DATE_FORMAT), nil
 }
 
 func FormatTime(t time.Time, format string) string {
