@@ -18,4 +18,4 @@ RUN apk add tzdata \
     && echo "Asia/Shanghai" > /etc/timezone \
     && apk del tzdata \
     && rm -rf /var/cache/apk/*
-ENTRYPOINT ./${APP} --profile=${PROFILE}
+ENTRYPOINT ./${APP} --profile=${PROFILE} --config=/etc/appconfig/${APP}.yaml

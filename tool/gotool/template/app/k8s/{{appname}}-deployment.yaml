@@ -5,6 +5,7 @@ metadata:
   labels:
     app: {{.appname}}
   name: {{.appname}}
+  namespace: default
 spec:
   type: ClusterIP
   ports:
@@ -20,6 +21,7 @@ metadata:
   labels:
     app: {{.appname}}
   name: {{.appname}}
+  namespace: default
 spec:
   replicas: 1
   selector:

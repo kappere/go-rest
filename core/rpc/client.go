@@ -125,7 +125,11 @@ func apply(request *http.Request) interface{} {
 }
 
 func Service(srvname string) *RpcService {
-	return srvLookup(srvname)
+	srv := srvLookup(srvname)
+	if srv == nil {
+		panic("service not found: " + srvname)
+	}
+	return srv
 }
 
 func isInKubernetesCluster() bool {

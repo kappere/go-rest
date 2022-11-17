@@ -4,12 +4,10 @@ metadata:
   name: {{.appname}}
   labels:
     app: {{.appname}}
+  namespace: default
 data:
-  name1: "value1"
-  name2: "value2"
   {{.appname}}.yaml: |
-    a: true
-    b: 222
+    K8S_CONFIGMAP: {{.appname}}.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -17,8 +15,8 @@ metadata:
   name: {{.appname}}
   labels:
     app: {{.appname}}
+  namespace: default
 type: Opaque
 stringData:
   {{.appname}}-secret.yaml: |
-    name3: "value3"
-    name4: "value4"
+    K8S_SECRET: {{.appname}}-secret.yaml
