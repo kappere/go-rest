@@ -123,9 +123,10 @@ func setupMiddleware(engine *rest.Engine, conf *rest.Config) {
 	}
 	// 自定义日志格式
 	engine.Use(middleware.NiceLoggerFormatter(func(param middleware.LogFormatterParams) string {
-		return fmt.Sprintf("%s%s [%s][%s] %s %s %s %d %s %s\n",
+		return fmt.Sprintf("%s%s [%s|%s|%s] : %s %s %s %d %s %s\n",
 			logger.INFO_PREFIX,
 			logger.FormatDateTime(param.TimeStamp),
+			logger.Hostname,
 			param.RequestId,
 			param.ClientIP,
 			param.Method,

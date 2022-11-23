@@ -138,7 +138,7 @@ func (l GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 
 	elapsed := time.Since(begin)
 	f := utils.FileWithLineNum()
-	f = f[len(f)-30:]
+	f = Hostname + "|" + f[len(f)-30:]
 	switch {
 	case err != nil && l.LogLevel >= ErrorLevel && (!errors.Is(err, ErrRecordNotFound) || !l.IgnoreRecordNotFoundError):
 		sql, rows := fc()

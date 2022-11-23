@@ -63,6 +63,7 @@ var logWritter io.Writer
 var logger *log.Logger
 var gormLogger *GormLogger
 var rawLogger *log.Logger
+var Hostname, _ = os.Hostname()
 
 func (l *LogFile) formatMsgHeader(calldepth int, prefix string, codeLine string) string {
 	now := time.Now() // get this early.
@@ -98,7 +99,7 @@ func (l *LogFile) formatHeader(buf *[]byte, prefix string, t time.Time, file str
 	*buf = append(*buf, ' ')
 	if file != "" {
 		f := fmt.Sprintf("%30s", file)
-		*buf = append(*buf, ("[" + f[len(f)-30:] + "]")...)
+		*buf = append(*buf, ("[" + Hostname + "|" + f[len(f)-30:] + "]")...)
 		if goroutine != "" {
 			*buf = append(*buf, fmt.Sprintf(" [%-12s]", goroutine)...)
 		}
