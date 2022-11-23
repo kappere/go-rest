@@ -121,24 +121,24 @@ func cmdApp(args []string) {
 	modstr := ""
 	fullProjectname := ""
 	appname := ""
-	submod := false
+	// submod := false
 	if _, err := os.Stat("go.mod"); err == nil {
 		// 子模块，从go.mod中获取项目名，从cmd中获取appname
-		submod = true
+		// submod = true
 		modbyte, _ := ioutil.ReadFile("go.mod")
 		modstr = strings.TrimSpace(string(modbyte))
 		appname = args[2]
-		fullProjectname = strings.TrimSpace(strings.TrimPrefix(strings.Split(modstr, "\n")[0], "module ")) + "/app/" + appname
+		fullProjectname = strings.TrimSpace(strings.TrimPrefix(strings.Split(modstr, "\n")[0], "module ")) + "/" + appname
 		if strings.LastIndex(appname, "/") > 0 {
 			appname = appname[strings.LastIndex(appname, "/")+1:]
 			fullProjectname = args[2]
 		}
-		if _, err := os.Stat("app"); err != nil {
-			os.Mkdir("app", os.ModeDir)
-		}
+		// if _, err := os.Stat("app"); err != nil {
+		// 	os.Mkdir("app", os.ModeDir)
+		// }
 	} else {
 		// 独立项目，从cmd中获取项目名和appname
-		submod = false
+		// submod = false
 		fullProjectname = args[2]
 		appname = fullProjectname[strings.LastIndex(fullProjectname, "/")+1:]
 	}
@@ -156,10 +156,10 @@ func cmdApp(args []string) {
 	model["projectname"] = projectname
 	model["fullprojectname"] = fullProjectname
 
-	if submod {
-		// 创建项目文件夹
-		os.Chdir("app")
-	}
+	// if submod {
+	// 	// 创建项目文件夹
+	// 	os.Chdir("app")
+	// }
 	os.Mkdir(appname, os.ModeDir)
 	tranverseTplDir(templateAppFs, "template/app", appname, model)
 
@@ -169,6 +169,16 @@ func cmdApp(args []string) {
 	exec.Command("go", "mod", "init", fullProjectname).Run()
 	fmt.Println("go mod tidy")
 	exec.Command("go", "mod", "tidy").Run()
+
+	// 加入workspace
+	os.Chdir("../")
+	if _, err := os.Stat("go.work"); err == nil {
+		fmt.Println("go work use ./" + appname)
+		exec.Command("go", "work", "use", "./"+appname).Run()
+	} else {
+		fmt.Println("go work init ./" + appname)
+		exec.Command("go", "work", "init", "./"+appname).Run()
+	}
 	fmt.Println("success")
 }
 

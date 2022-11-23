@@ -55,6 +55,7 @@ Config:
     TokenUri: /token
   # RPC服务配置，不同服务配置相同token才能互相访问
   Rpc:
+    # rpc调用鉴权，空则不校验
     Token: abcdef123645
     # 服务治理方式：IpProxy(默认), kubernetes
     Type: IpProxy

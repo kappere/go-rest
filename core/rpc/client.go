@@ -35,7 +35,7 @@ func InitClient(c *rest.RpcConfig) {
 	if rpcConf.Type == "kubernetes" {
 		if isInKubernetesCluster() {
 			logger.Info("in kubernetes")
-			// 需要先添加service读取权限
+			// minikube需要先添加service读取权限
 			// kubectl create clusterrolebinding service-reader-pod --clusterrole=service-reader --serviceaccount=default:default
 			srvLookup = func(srvname string) *RpcService {
 				_, addrs, _ := net.LookupSRV(rpcConf.Kubernetes.PortName, "tcp", srvname)
@@ -102,14 +102,14 @@ func apply(request *http.Request) interface{} {
 	client := &http.Client{}
 
 	// 计算token
-	rpcToken := rpcConf.Token
-	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
-	hash := sha256.New()
-	randstr := strconv.Itoa(rand.Int())
-	hash.Write([]byte(rpcToken + "#" + randstr + "#" + timestamp))
-	enc := hex.EncodeToString(hash.Sum(nil))
-
-	request.Header.Add("inner_token_enc", enc+"#"+randstr+"#"+timestamp)
+	if rpcConf.Token != "" {
+		timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
+		hash := sha256.New()
+		randstr := strconv.Itoa(rand.Int())
+		hash.Write([]byte(rpcConf.Token + "#" + randstr + "#" + timestamp))
+		enc := hex.EncodeToString(hash.Sum(nil))
+		request.Header.Add("inner_token_enc", enc+"#"+randstr+"#"+timestamp)
+	}
 	response, err := client.Do(request)
 	if err != nil {
 		panic(err)
