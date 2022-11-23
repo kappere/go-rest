@@ -4,4 +4,4 @@ Config:
   Port: 80
   # ConfigFile: /etc/{{.appname}}/config.yaml
   Log:
-    Path: /var/log/app/{{.appname}}/{{.appname}}
+    Path: /var/log/{{.appname}}

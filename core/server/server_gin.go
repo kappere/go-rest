@@ -90,7 +90,7 @@ func startServer(engine *rest.Engine, conf *rest.Config, startTime time.Time) {
 // 初始化服务组件
 func setupComponent(conf *rest.Config) func() {
 	// 初始化日志配置
-	logger.Setup(&conf.Log, logger.InfoLevel, logger.ByDay, 60)
+	logger.Setup(&conf.Log, conf.AppName, logger.InfoLevel, logger.ByDay, 60)
 
 	logger.Info("===========================")
 	logger.Info("app     : %s", conf.AppName)

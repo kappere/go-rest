@@ -274,8 +274,8 @@ func (me LogFile) Write(buf []byte) (n int, err error) {
 	return logFile.fileFd.Write(buf)
 }
 
-func Setup(logConf *rest.LogConfig, level LogLevel, saveMode int, saveDays int) {
-	logFile.fileName = logConf.Path
+func Setup(logConf *rest.LogConfig, filePrefix string, level LogLevel, saveMode int, saveDays int) {
+	logFile.fileName = logConf.Path + "/" + filePrefix
 	logFile.level = level
 	logFile.saveMode = saveMode
 	logFile.saveDays = logConf.SaveDays

@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine as build
+FROM golang:1.19-alpine as build
 WORKDIR /app
 COPY . .
 RUN go env -w GOPROXY=https://goproxy.cn,direct
@@ -18,4 +18,4 @@ RUN apk add tzdata \
     && echo "Asia/Shanghai" > /etc/timezone \
     && apk del tzdata \
     && rm -rf /var/cache/apk/*
-ENTRYPOINT ./${APP} --profile=${PROFILE} --config=/etc/appconfig/${APP}.yaml
+ENTRYPOINT ./${APP} --profile=${PROFILE} --config=/etc/${APP}/${APP}.yaml

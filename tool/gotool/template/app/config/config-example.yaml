@@ -6,7 +6,8 @@ Config:
   Profile: prod
   # 启动端口，可以通过命令行参数--port=80指定
   Port: 80
-  # 外部配置文件，未设置则默认检查并读取当前目录config.yaml（仅该文件不存在则不读取），可以通过命令行参数--config=config.yaml指定，可以用作k8s的挂载ConfigMap
+  # 外部配置文件，未设置则默认检查并读取当前目录config.yaml（仅该文件不存在则不读取），可以通过命令行参数--config=config.yaml指定，
+  # 可以用作k8s的挂载ConfigMap(路径：/etc/{{.appname}}/config.yaml)
   ConfigFile:
   # 日志配置
   Log:

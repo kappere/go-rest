@@ -42,3 +42,15 @@ spec:
         env:
           - name: PROFILE
             value: prod
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/{{.appname}}
+        - name: log-volume
+          mountPath: /var/log/{{.appname}}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{.appname}}
+      - name: log-volume
+        hostPath:
+          path: /var/log/{{.appname}}
