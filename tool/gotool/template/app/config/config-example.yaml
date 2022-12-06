@@ -12,7 +12,7 @@ Config:
   # 日志配置
   Log:
     # 日志路径，按照时间拆分日志文件
-    Path: log/app
+    Path: log
     # 保存天数，-1永久保存
     SaveDays: -1
   # gin的debug配置
