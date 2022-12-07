@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
@@ -21,8 +21,6 @@ var rpcConf *rest.RpcConfig
 
 var srvLookup func(srvname string) *RpcService
 
-var srvMap = make(map[string]*RpcService)
-
 type RpcService struct {
 	Name string
 	Addr string
@@ -32,7 +30,7 @@ func InitClient(c *rest.RpcConfig) {
 	rpcConf = c
 
 	logger.Info("service type: %s", rpcConf.Type)
-	if rpcConf.Type == "kubernetes" {
+	if rpcConf.Type == "Kubernetes" {
 		if isInKubernetesCluster() {
 			logger.Info("in kubernetes")
 			// minikube需要先添加service读取权限
@@ -83,10 +81,10 @@ func (service *RpcService) Call(url string, body map[string]interface{}) interfa
 	return httpPost(service.Addr+RPC_PREFIX+url, body)
 }
 
-func httpGet(url string) interface{} {
-	reqest, _ := http.NewRequest("GET", url, nil)
-	return apply(reqest)
-}
+// func httpGet(url string) interface{} {
+// 	request, _ := http.NewRequest("GET", url, nil)
+// 	return apply(request)
+// }
 
 func httpPost(url string, body map[string]interface{}) interface{} {
 	reqbody := strings.NewReader("")
@@ -115,7 +113,10 @@ func apply(request *http.Request) interface{} {
 		panic(err)
 	}
 	defer response.Body.Close()
-	bytedata, _ := ioutil.ReadAll(response.Body)
+	bytedata, err := io.ReadAll(response.Body)
+	if err != nil {
+		panic(err)
+	}
 	resp := rest.Resp{}
 	json.Unmarshal(bytedata, &resp)
 	if !resp.Success {

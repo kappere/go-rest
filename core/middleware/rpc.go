@@ -33,7 +33,12 @@ func Rpc(rpcConf *rest.RpcConfig) rest.HandlerFunc {
 				c.Abort()
 				return
 			}
-			timestamp, _ := strconv.ParseInt(tks[2], 10, 64)
+			timestamp, err := strconv.ParseInt(tks[2], 10, 64)
+			if err != nil {
+				c.JSON(http.StatusForbidden, rest.ErrorWithCode("invalid timestamp!", -550))
+				c.Abort()
+				return
+			}
 			if abs(timestamp-time.Now().UnixMilli()) > 1000*180 {
 				c.JSON(http.StatusForbidden, rest.ErrorWithCode("sync time please!", -550))
 				c.Abort()

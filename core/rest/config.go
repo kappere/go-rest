@@ -134,7 +134,7 @@ var defaultConf = MockConfig{
 		},
 		Rpc: RpcConfig{
 			Token: strconv.Itoa(rand.Int()),
-			// kubernetes IpProxy
+			// Kubernetes IpProxy
 			Type: "IpProxy",
 			IpProxy: IpProxyConfig{
 				Proxy: map[string]string{

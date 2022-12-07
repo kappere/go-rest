@@ -1,16 +1,17 @@
 // jwt使用说明
 //
 // 登录签发jwt
-// engine.POST("/login", func(c *rest.Context) {
-// 	middleware.CreateJwtToken(c, &middleware.UserClaims{
-// 		RegisteredClaims: jwt.RegisteredClaims{
-// 			Subject:  "123456",
-// 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-// 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Second)),
-// 		},
-// 	})
-// 	c.JSON(http.StatusOK, rest.Success(nil))
-// })
+//
+//	engine.POST("/login", func(c *rest.Context) {
+//		middleware.CreateJwtToken(c, &middleware.UserClaims{
+//			RegisteredClaims: jwt.RegisteredClaims{
+//				Subject:  "123456",
+//				IssuedAt:  jwt.NewNumericDate(time.Now()),
+//				ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Second)),
+//			},
+//		})
+//		c.JSON(http.StatusOK, rest.Success(nil))
+//	})
 //
 // jwt拦截器校验(不通过返回code=-999(rest.STATUS_NO_AUTHENTICATION))
 // jwtGroup := engine.Group("/", middleware.JwtAuth(nil))
@@ -18,13 +19,14 @@
 //
 // 针对需要鉴权的文件下载，如果是POST，可以在文件下载接口生成一个短期的jwt拼接在url后返回；如果是GET，则正常下载
 // 前端示例（响应：{"url": "https://path.to/protected.file?jwt=xxxxx"}）：
-// function clickedOnDownloadButton() {
-// 	postToSignWithAuthorizationHeader({
-// 		url: 'https://path.to/protected.file'
-// 	}).then(function(resp) {
-// 		window.location = resp.url;
-// 	});
-// }
+//
+//	function clickedOnDownloadButton() {
+//		postToSignWithAuthorizationHeader({
+//			url: 'https://path.to/protected.file'
+//		}).then(function(resp) {
+//			window.location = resp.url;
+//		});
+//	}
 package middleware
 
 import (
@@ -69,7 +71,7 @@ func JwtAuth(pubKey *rsa.PublicKey) rest.HandlerFunc {
 		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 			// Don't forget to validate the alg is what you expect:
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return publicKey, nil
 		})

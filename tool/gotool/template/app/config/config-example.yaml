@@ -58,7 +58,7 @@ Config:
   Rpc:
     # rpc调用鉴权，空则不校验
     Token: abcdef123645
-    # 服务治理方式：IpProxy(默认), kubernetes
+    # 服务治理方式：IpProxy(默认), Kubernetes
     Type: IpProxy
     IpProxy:
       Proxy:
