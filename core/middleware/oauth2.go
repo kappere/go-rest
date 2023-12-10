@@ -1,17 +1,18 @@
 // 文档https://go-oauth2.github.io/zh/
 // oauth2错误码一览
-// var StatusCodes = map[error]int{
-// 	ErrInvalidRequest:          400,
-// 	ErrUnauthorizedClient:      401,
-// 	ErrAccessDenied:            403,
-// 	ErrUnsupportedResponseType: 401,
-// 	ErrInvalidScope:            400,
-// 	ErrServerError:             500,
-// 	ErrTemporarilyUnavailable:  503,
-// 	ErrInvalidClient:           401,
-// 	ErrInvalidGrant:            401,
-// 	ErrUnsupportedGrantType:    401,
-// }
+//
+//	var StatusCodes = map[error]int{
+//		ErrInvalidRequest:          400,
+//		ErrUnauthorizedClient:      401,
+//		ErrAccessDenied:            403,
+//		ErrUnsupportedResponseType: 401,
+//		ErrInvalidScope:            400,
+//		ErrServerError:             500,
+//		ErrTemporarilyUnavailable:  503,
+//		ErrInvalidClient:           401,
+//		ErrInvalidGrant:            401,
+//		ErrUnsupportedGrantType:    401,
+//	}
 //
 // 获取access token:
 // http://ip:port/token?grant_type=client_credentials&client_id=&client_secret=
@@ -24,9 +25,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-oauth2/oauth2/server"
-	"github.com/kappere/go-rest/core/db"
-	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/config/conf"
+	"github.com/kappere/go-rest/core/httpx"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/generates"
 	"gopkg.in/oauth2.v3/manage"
@@ -124,17 +126,17 @@ func (store *DbTokenStore) GetByRefresh(refresh string) (oauth2.TokenInfo, error
 	return newModelsToken(&token), nil
 }
 
-func OAuth2Client(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.HandlerFunc {
-	if db.Db == nil {
+func OAuth2Client(oauth2Conf *conf.OAuth2Config, engine *gin.Engine, db *gorm.DB) gin.HandlerFunc {
+	if db == nil {
 		panic("database not inititialized")
 	}
 	manager := manage.NewManager()
 	// client接口
-	manager.MapClientStorage(&DbClientStore{Db: db.Db})
+	manager.MapClientStorage(&DbClientStore{Db: db})
 	// access_token生成
 	manager.MapAccessGenerate(generates.NewAccessGenerate())
 	// access_token存储
-	manager.MapTokenStorage(&DbTokenStore{Db: db.Db, TokenMutex: sync.Mutex{}})
+	manager.MapTokenStorage(&DbTokenStore{Db: db, TokenMutex: sync.Mutex{}})
 	cfg := &manage.Config{
 		// 访问令牌过期时间（默认为2小时）
 		AccessTokenExp: time.Duration(oauth2Conf.Expire) * time.Second,
@@ -146,7 +148,7 @@ func OAuth2Client(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.Handl
 	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
-	engine.GET(oauth2Conf.TokenUri, func(c *rest.Context) {
+	engine.GET(oauth2Conf.TokenUri, func(c *gin.Context) {
 		grantType, tgr, err := srv.ValidationTokenRequest(c.Request)
 		if err != nil {
 			errorToken(c, srv, err)
@@ -166,12 +168,12 @@ func OAuth2Client(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.Handl
 			return
 		}
 
-		c.JSON(http.StatusOK, rest.Success(srv.GetTokenData(tokenInfo)))
+		c.JSON(http.StatusOK, httpx.Ok(srv.GetTokenData(tokenInfo)))
 	})
-	return func(c *rest.Context) {
+	return func(c *gin.Context) {
 		tokenInfo, err := srv.ValidationBearerToken(c.Request)
 		if err != nil {
-			c.JSON(http.StatusOK, rest.ErrorWithCode(err.Error(), rest.STATUS_NO_AUTHORIZATION))
+			c.JSON(http.StatusOK, httpx.ErrorWithCode(err.Error(), httpx.STATUS_NO_AUTHORIZATION))
 			c.Abort()
 			return
 		}
@@ -182,9 +184,9 @@ func OAuth2Client(oauth2Conf *rest.OAuth2Config, engine *rest.Engine) rest.Handl
 	}
 }
 
-func errorToken(c *rest.Context, srv *server.Server, err error) {
+func errorToken(c *gin.Context, srv *server.Server, err error) {
 	errData, statusCode, _ := srv.GetErrorData(err)
-	c.JSON(http.StatusOK, rest.ErrorWithCode(errData["error"].(string)+":"+errData["error_description"].(string), statusCode))
+	c.JSON(http.StatusOK, httpx.ErrorWithCode(errData["error"].(string)+":"+errData["error_description"].(string), statusCode))
 }
 
 // OauthClientDetails client model

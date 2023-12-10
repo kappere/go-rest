@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -9,12 +9,12 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/kappere/go-rest/core/logger"
-	"github.com/kappere/go-rest/core/rest"
+	"github.com/gin-gonic/gin"
+	"github.com/kappere/go-rest/core/httpx"
 )
 
-func NiceRecovery() rest.HandlerFunc {
-	return func(c *rest.Context) {
+func NiceRecovery() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
 				// Check for a broken connection, as it is not really a
@@ -27,22 +27,19 @@ func NiceRecovery() rest.HandlerFunc {
 						}
 					}
 				}
-				logger.Error("%v", err)
+				slog.Error("Nice recovery.", "error", err)
 				if brokenPipe {
 					// If the connection is dead, we can't write a status to it.
-					c.JSON(http.StatusOK, rest.Error(err.(error).Error()))
+					c.JSON(http.StatusOK, httpx.Error(err.(error).Error()))
 					c.Abort()
 				} else {
-					pnc, e := err.(*rest.BizPanic)
-					if e {
-						c.JSON(http.StatusOK, rest.ErrorWithCode(fmt.Sprintf("%v", pnc), pnc.Code))
-					} else {
-						httpRequest, _ := httputil.DumpRequest(c.Request, false)
-						headers := strings.Split(string(httpRequest), "\r\n")
-						headersToStr := strings.Join(headers, "\r\n")
-						logger.Raw("[Recovery] panic recovered: %v\n%s%s", err, headersToStr, debug.Stack())
-						c.JSON(http.StatusOK, rest.Error("服务器异常，请联系管理员"))
-					}
+					httpRequest, _ := httputil.DumpRequest(c.Request, false)
+					headers := strings.Split(string(httpRequest), "\r\n")
+					headersToStr := strings.Join(headers, "\r\n")
+					slog.Error("[Recovery] Panic recovered.")
+					slog.Error(headersToStr)
+					slog.Error(string(debug.Stack()))
+					c.JSON(http.StatusOK, httpx.Error("服务器异常，请联系管理员"))
 					c.Abort()
 				}
 			}

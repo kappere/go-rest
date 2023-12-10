@@ -4,13 +4,12 @@ package redislock
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strconv"
 	"sync/atomic"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/kappere/go-rest/core/logger"
-	gorest_redis "github.com/kappere/go-rest/core/redis"
 )
 
 const (
@@ -39,14 +38,20 @@ type RedisLock struct {
 	id    string
 }
 
+var redisClient *redis.Client
+
+func SetStore(store *redis.Client) {
+	redisClient = store
+}
+
 // Obtain returns a RedisLock
 func Obtain(key string) *RedisLock {
-	if gorest_redis.Rdb == nil {
-		logger.Error("cannot find redis")
+	if redisClient == nil {
+		slog.Error("Cannot find redis")
 		return nil
 	}
 	return &RedisLock{
-		store: gorest_redis.Rdb,
+		store: redisClient,
 		key:   key,
 		id:    uuid.NewString(),
 	}
@@ -69,7 +74,7 @@ func (lock *RedisLock) TryLock(seconds int) (bool, error) {
 		return false, nil
 	} else if err != nil {
 		atomic.AddInt32(&lock.count, -1)
-		logger.Error("Error on acquiring lock for %s, %s", lock.key, err.Error())
+		slog.Error("Error on acquiring lock,", "key", lock.key, "error", err.Error())
 		return false, err
 	} else if !ok {
 		atomic.AddInt32(&lock.count, -1)

@@ -1,0 +1,53 @@
+app:
+  # 应用名称
+  name: app
+  debug: false
+  profile: prod
+http:
+  port: 8080
+  session:
+    # 存储类型：memory/redis/cookie
+    storetype: memory
+    name: sessionid
+    domain:
+    path: /
+    secure: false
+    httponly: true
+    # 有效期1个月
+    maxage: 2592000
+    # 参照http.SameSite
+    samesite: 1
+  periodlimit:
+    # 默认关闭
+    enable: false
+    # 滑动窗口大小（秒）
+    period: 5
+    # 窗口中单个资源最大请求数
+    quota: 100
+  oauth2:
+    enable: false
+    expire: 7200
+    tokenuri: /token
+  rpc:
+    # rpc调用鉴权，空则不校验
+    token: abcdef123456
+    # 服务治理方式：ipproxy(默认), kubernetes
+    type: ipproxy
+    ipproxy:
+      proxy:
+        "*": http://127.0.0.1:8080
+    kubernetes:
+      namespace: default
+      # service代理地址，仅集群外部使用。key: app名称, value: 代理地址，*表示默认代理
+      proxy:
+        "*": http://127.0.0.1:8080/api/v1/namespaces/{namespace}/services/http:{app}:/proxy
+      # 命名端口名称，默认http
+      portname: http
+log:
+  # 日志路径，按照时间拆分日志文件
+  path: log
+database:
+  dsn: username:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+redis:
+  addr: 127.0.0.1:6379
+  password: password

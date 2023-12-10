@@ -1,7 +1,0 @@
-Config:
-  AppName: {{.appname}}
-  Profile: prod
-  Port: 80
-  # ConfigFile: /etc/{{.appname}}/config.yaml
-  Log:
-    Path: /var/log/{{.appname}}

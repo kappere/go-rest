@@ -1,0 +1,19 @@
+app:
+  name: {{.appname_}}
+  debug: true
+  profile: dev
+http:
+  port: 8080
+  rpc:
+    token: abcdef123645
+    type: IpProxy
+    ipproxy:
+      proxy:
+        "*": http://127.0.0.1:8080
+log:
+  path: log
+database:
+  dsn: username:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+redis:
+  addr: 127.0.0.1:6379
+  password: password

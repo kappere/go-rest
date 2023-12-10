@@ -4,33 +4,47 @@ package middleware
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/kappere/go-rest/core/logger"
-	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/config/conf"
+	"github.com/kappere/go-rest/core/httpx"
+	rest_redis "github.com/kappere/go-rest/core/redis"
 )
 
 // PeriodLimit 分布式限流中间件
-func PeriodLimitMiddleware(period int, quota int, limitStore *redis.Client, clusterLimitStore *redis.ClusterClient, keyPrefix string, opts ...PeriodOption) rest.HandlerFunc {
-	limit := newPeriodLimit(period, quota, limitStore, clusterLimitStore, keyPrefix)
-	return func(c *rest.Context) {
-		r, err := limit.take(c.Request.RequestURI)
-		if err != nil {
-			logger.Error("peroid limit middleware has error, URI: %s", c.Request.RequestURI)
-			c.JSON(http.StatusOK, rest.ErrorWithCode("peroid limit middleware has error", rest.STATUS_ERROR_LIMIT))
-			c.Abort()
-			return
-		}
-		if r == OverQuota {
-			c.JSON(http.StatusOK, rest.ErrorWithCode("resource limited", rest.STATUS_ERROR_LIMIT))
-			c.Abort()
-			return
-		}
-		c.Next()
+func PeriodLimitMiddleware(periodLimitConfig conf.PeriodLimitConfig, redisConfig conf.RedisConfig, opts ...PeriodOption) (gin.HandlerFunc, func()) {
+	var limitStore *redis.Client
+	var clusterLimitStore *redis.ClusterClient
+	addrLen := len(strings.Split(redisConfig.Addr, ","))
+	if addrLen > 1 {
+		limitStore = rest_redis.NewRedisClient(redisConfig)
+	} else if addrLen == 1 {
+		clusterLimitStore = rest_redis.NewRedisClusterClient(redisConfig)
 	}
+	limit := newPeriodLimit(periodLimitConfig.Period, periodLimitConfig.Quota, limitStore, clusterLimitStore, "REST_PERIOD_LIMIT")
+	return func(c *gin.Context) {
+			r, err := limit.take(c.Request.RequestURI)
+			if err != nil {
+				slog.Error("Peroid limit middleware has error,", "URI", c.Request.RequestURI)
+				c.JSON(http.StatusOK, httpx.ErrorWithCode("Peroid limit middleware has error", httpx.STATUS_ERROR_LIMIT))
+				c.Abort()
+				return
+			}
+			if r == OverQuota {
+				c.JSON(http.StatusOK, httpx.ErrorWithCode("Resource limited", httpx.STATUS_ERROR_LIMIT))
+				c.Abort()
+				return
+			}
+			c.Next()
+		}, func() {
+			limit.close()
+		}
 }
 
 // to be compatible with aliyun redis, we cannot use `local key = KEYS[1]` to reuse the key
@@ -97,6 +111,15 @@ func newPeriodLimit(period, quota int, limitStore *redis.Client, clusterLimitSto
 	}
 
 	return limiter
+}
+
+func (h *PeriodLimit) close() {
+	if h.limitStore != nil {
+		h.limitStore.Close()
+	}
+	if h.clusterLimitStore != nil {
+		h.clusterLimitStore.Close()
+	}
 }
 
 // Take requests a permit, it returns the permit state.

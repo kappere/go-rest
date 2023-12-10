@@ -37,8 +37,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/httpx"
 )
 
 var (
@@ -53,19 +54,19 @@ type UserClaims struct {
 	Extra map[string]string `json:"extra,omitempty"`
 }
 
-func JwtAuth(pubKey *rsa.PublicKey) rest.HandlerFunc {
+func JwtAuth(pubKey *rsa.PublicKey) gin.HandlerFunc {
 	// 未传入公钥，默认本地作为jwt签发方
 	if pubKey == nil {
 		publicKey = &privateKey.PublicKey
 	}
-	return BasicAuth(func(c *rest.Context) bool {
+	return BasicAuth(func(c *gin.Context) bool {
 		// 优先从url中获取token，其次从header中获取，从url中获取token是用于新窗口文件下载的需求
 		tokenString := c.Request.URL.Query().Get("jwt")
 		if tokenString == "" {
 			tokenString = strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Bearer ")
 		}
 		if tokenString == "" {
-			c.JSON(http.StatusOK, rest.ErrorWithCode("jwt token required", rest.STATUS_NO_AUTHENTICATION))
+			c.JSON(http.StatusOK, httpx.ErrorWithCode("jwt token required", httpx.STATUS_NO_AUTHENTICATION))
 			return false
 		}
 		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -76,12 +77,12 @@ func JwtAuth(pubKey *rsa.PublicKey) rest.HandlerFunc {
 			return publicKey, nil
 		})
 		if err != nil {
-			c.JSON(http.StatusOK, rest.ErrorWithCode(err.Error(), rest.STATUS_NO_AUTHENTICATION))
+			c.JSON(http.StatusOK, httpx.ErrorWithCode(err.Error(), httpx.STATUS_NO_AUTHENTICATION))
 			return false
 		}
 		claims, ok := token.Claims.(*UserClaims)
 		if !ok || !token.Valid {
-			c.JSON(http.StatusOK, rest.ErrorWithCode("invalid jwt token", rest.STATUS_NO_AUTHENTICATION))
+			c.JSON(http.StatusOK, httpx.ErrorWithCode("invalid jwt token", httpx.STATUS_NO_AUTHENTICATION))
 			return false
 		}
 		refreshJwtToken(c, claims)
@@ -90,7 +91,7 @@ func JwtAuth(pubKey *rsa.PublicKey) rest.HandlerFunc {
 	})
 }
 
-func CreateJwtToken(c *rest.Context, claims *UserClaims) string {
+func CreateJwtToken(c *gin.Context, claims *UserClaims) string {
 	if claims.IssuedAt == nil {
 		claims.IssuedAt = jwt.NewNumericDate(time.Now())
 	}
@@ -103,7 +104,7 @@ func CreateJwtToken(c *rest.Context, claims *UserClaims) string {
 	return tokenString
 }
 
-func refreshJwtToken(c *rest.Context, claims *UserClaims) {
+func refreshJwtToken(c *gin.Context, claims *UserClaims) {
 	duration := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
 	if time.Now().After(claims.ExpiresAt.Add(-duration / 2)) {
 		claims.IssuedAt = jwt.NewNumericDate(time.Now())

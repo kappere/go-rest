@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"math/rand"
 	"net"
 	"net/http"
@@ -13,63 +14,91 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kappere/go-rest/core/logger"
-	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/config/conf"
+	"github.com/kappere/go-rest/core/httpx"
 )
 
-var rpcConf *rest.RpcConfig
+var rpcConf conf.RpcConfig
 
-var srvLookup func(srvname string) *RpcService
+var srvLookup func(srvname string) RpcService
 
 type RpcService struct {
 	Name string
 	Addr string
 }
 
-func InitClient(c *rest.RpcConfig) {
-	rpcConf = c
+type RpcResult struct {
+	Data []byte
+	Err  error
+}
 
-	logger.Info("service type: %s", rpcConf.Type)
-	if rpcConf.Type == "Kubernetes" {
+func (r RpcResult) ToMap() (interface{}, error) {
+	resp := httpx.Ok(nil)
+	err := json.Unmarshal(r.Data, &resp)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Error() != nil {
+		return nil, resp.Error()
+	}
+	return resp.GetData(), nil
+}
+
+func (r RpcResult) ToObj(result interface{}) error {
+	data, err := r.ToMap()
+	if err != nil {
+		return err
+	}
+	objByteData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(objByteData, result)
+}
+
+func InitClient(c conf.RpcConfig) {
+	rpcConf = c
+	slog.Info("Init rpc client,", "type", rpcConf.Type)
+	if strings.ToLower(rpcConf.Type) == "kubernetes" {
 		if isInKubernetesCluster() {
-			logger.Info("in kubernetes")
+			slog.Info("In kubernetes")
 			// minikube需要先添加service读取权限
 			// kubectl create clusterrolebinding service-reader-pod --clusterrole=service-reader --serviceaccount=default:default
-			srvLookup = func(srvname string) *RpcService {
+			srvLookup = func(srvname string) RpcService {
 				_, addrs, _ := net.LookupSRV(rpcConf.Kubernetes.PortName, "tcp", srvname)
 				if len(addrs) > 0 {
 					addr := "http://" + addrs[0].Target + ":" + strconv.FormatInt(int64(addrs[0].Port), 10)
-					return &RpcService{
+					return RpcService{
 						Name: srvname,
 						Addr: addr,
 					}
 				}
-				return nil
+				return RpcService{Name: srvname}
 			}
 		} else {
-			logger.Info("out of kubernetes")
+			slog.Info("Out of kubernetes")
 			defaultProxyAddr := rpcConf.Kubernetes.Proxy["*"]
-			srvLookup = func(srvname string) *RpcService {
+			srvLookup = func(srvname string) RpcService {
 				addr := rpcConf.Kubernetes.Proxy[srvname]
 				if addr == "" {
 					addr = defaultProxyAddr
 				}
 				addr = strings.ReplaceAll(addr, "{namespace}", rpcConf.Kubernetes.Namespace)
 				addr = strings.ReplaceAll(addr, "{app}", srvname)
-				return &RpcService{
+				return RpcService{
 					Name: srvname,
 					Addr: addr,
 				}
 			}
 		}
-	} else if rpcConf.Type == "IpProxy" {
+	} else if strings.ToLower(rpcConf.Type) == "ipproxy" {
 		defaultProxyAddr := rpcConf.IpProxy.Proxy["*"]
-		srvLookup = func(srvname string) *RpcService {
+		srvLookup = func(srvname string) RpcService {
 			addr := rpcConf.IpProxy.Proxy[srvname]
 			if addr == "" {
 				addr = defaultProxyAddr
 			}
-			return &RpcService{
+			return RpcService{
 				Name: srvname,
 				Addr: addr,
 			}
@@ -77,26 +106,28 @@ func InitClient(c *rest.RpcConfig) {
 	}
 }
 
-func (service *RpcService) Call(url string, body map[string]interface{}) interface{} {
-	return httpPost(service.Addr+RPC_PREFIX+url, body)
+func (service RpcService) Call(url string, body map[string]interface{}) RpcResult {
+	data, err := httpPost(service.Addr+RPC_PREFIX+url, body)
+	if err != nil {
+		return RpcResult{nil, err}
+	}
+	return RpcResult{data, nil}
 }
 
-// func httpGet(url string) interface{} {
-// 	request, _ := http.NewRequest("GET", url, nil)
-// 	return apply(request)
-// }
-
-func httpPost(url string, body map[string]interface{}) interface{} {
+func httpPost(url string, body map[string]interface{}) ([]byte, error) {
 	reqbody := strings.NewReader("")
 	if body != nil {
 		jsonbody, _ := json.Marshal(body)
 		reqbody = strings.NewReader(string(jsonbody))
 	}
-	reqest, _ := http.NewRequest("POST", url, reqbody)
-	return apply(reqest)
+	request, err := http.NewRequest("POST", url, reqbody)
+	if err != nil {
+		return nil, err
+	}
+	return apply(request)
 }
 
-func apply(request *http.Request) interface{} {
+func apply(request *http.Request) ([]byte, error) {
 	client := &http.Client{}
 
 	// 计算token
@@ -110,25 +141,16 @@ func apply(request *http.Request) interface{} {
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer response.Body.Close()
-	bytedata, err := io.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-	resp := rest.Resp{}
-	json.Unmarshal(bytedata, &resp)
-	if !resp.Success {
-		panic(resp.Message)
-	}
-	return resp.Data
+	return io.ReadAll(response.Body)
 }
 
-func Service(srvname string) *RpcService {
+func Service(srvname string) RpcService {
 	srv := srvLookup(srvname)
-	if srv == nil {
-		panic("service not found: " + srvname)
+	if srv.Addr == "" {
+		panic("Service not found: " + srvname)
 	}
 	return srv
 }

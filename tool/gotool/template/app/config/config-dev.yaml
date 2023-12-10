@@ -1,8 +1,0 @@
-Config:
-  Debug: true
-  # Redis:
-  #   Addr: localhost:6379
-  #   Password:
-  # Database:
-  #   Type: mysql
-  #   Dsn: root:@(localhost:3306)/test?charset=utf8mb4&parseTime=True&loc=Local

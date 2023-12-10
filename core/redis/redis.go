@@ -2,48 +2,52 @@ package redis
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kappere/go-rest/core/logger"
-	"github.com/kappere/go-rest/core/rest"
+	"github.com/kappere/go-rest/core/config/conf"
 )
 
-var ctx = context.Background()
-var Rdb *redis.Client
-var ClusterRdb *redis.ClusterClient
-
-func Setup(redisConf *rest.RedisConfig) {
-	if redisConf.Addr == "" {
-		return
+func NewRedisClient(redisConfig conf.RedisConfig) *redis.Client {
+	if redisConfig.Addr == "" {
+		return nil
 	}
-	addrs := strings.Split(redisConf.Addr, ",")
-	if len(addrs) > 1 {
-		ClusterRdb = redis.NewClusterClient(&redis.ClusterOptions{
-			Addrs: addrs,
-			// To route commands by latency or randomly, enable one of the following.
-			//RouteByLatency: true,
-			//RouteRandomly: true,
-		})
-		logger.Info("init redis cluster")
+	var rdb *redis.Client
+	addrs := strings.Split(redisConfig.Addr, ",")
+	rdb = redis.NewClient(&redis.Options{
+		Addr:     addrs[0],
+		Password: redisConfig.Password, // no password set
+		DB:       0,                    // use default DB
+	})
+	slog.Info("Init redis,", "addr", redisConfig.Addr)
 
-		err := ClusterRdb.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
-			return shard.Ping(ctx).Err()
-		})
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		Rdb = redis.NewClient(&redis.Options{
-			Addr:     addrs[0],
-			Password: redisConf.Password, // no password set
-			DB:       0,                  // use default DB
-		})
-		logger.Info("init redis")
-
-		_, err := Rdb.Ping(ctx).Result()
-		if err != nil {
-			panic(err)
-		}
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		slog.Error("Init redis failed!", "error", err)
 	}
+	return rdb
+}
+
+func NewRedisClusterClient(redisConfig conf.RedisConfig) *redis.ClusterClient {
+	if redisConfig.Addr == "" {
+		return nil
+	}
+	var clusterRdb *redis.ClusterClient
+	addrs := strings.Split(redisConfig.Addr, ",")
+	clusterRdb = redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: addrs,
+		// To route commands by latency or randomly, enable one of the following.
+		//RouteByLatency: true,
+		//RouteRandomly: true,
+	})
+	slog.Info("Init redis cluster,", "addr", redisConfig.Addr)
+
+	err := clusterRdb.ForEachShard(context.Background(), func(ctx context.Context, shard *redis.Client) error {
+		return shard.Ping(ctx).Err()
+	})
+	if err != nil {
+		slog.Error("Init redis cluster failed!", "error", err)
+	}
+	return clusterRdb
 }

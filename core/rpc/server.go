@@ -2,14 +2,14 @@ package rpc
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/kappere/go-rest/core/config/conf"
 	"github.com/kappere/go-rest/core/middleware"
-	"github.com/kappere/go-rest/core/rest"
 )
 
 const (
-	RPC_PREFIX = "/_remote_procedure_call"
+	RPC_PREFIX = "/_rpc_"
 )
 
-func Server(engine *rest.Engine, rpcConf *rest.RpcConfig) *gin.RouterGroup {
+func Server(engine *gin.Engine, rpcConf conf.RpcConfig) *gin.RouterGroup {
 	return engine.Group(RPC_PREFIX, middleware.Rpc(rpcConf))
 }

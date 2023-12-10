@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"embed"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -13,9 +12,6 @@ import (
 
 //go:embed template/create/*
 var templateCreateFs embed.FS
-
-//go:embed template/app/*
-var templateAppFs embed.FS
 
 func main() {
 	args := os.Args
@@ -27,8 +23,6 @@ func main() {
 	switch os.Args[1] {
 	case "create":
 		cmdCreate(args)
-	case "app":
-		cmdApp(args)
 	default:
 		help()
 		return
@@ -39,8 +33,6 @@ func help() {
 	const helpStr = `
 Create new project:
 	gotool create <xxxx.com/projectname>
-Create submodule (run in project folder):
-	gotool app <appname>
 `
 	fmt.Println(strings.TrimSpace(helpStr))
 }
@@ -82,71 +74,24 @@ func tranverseTplDir(fs embed.FS, dirName string, targetDirName string, model ma
 
 func render(s string, model map[string]string) string {
 	for k, v := range model {
-		s = strings.ReplaceAll(s, "{{"+k+"}}", v)
+		s = strings.ReplaceAll(s, "{{."+k+"}}", v)
 	}
 	return s
 }
 
 func cmdCreate(args []string) {
 	if len(args) < 3 {
-		panic("unknown projectname")
-	}
-	fullProjectname := args[2]
-	projectname := fullProjectname[strings.LastIndex(fullProjectname, "/")+1:]
-	fmt.Println("create project " + fullProjectname)
-
-	model := make(map[string]string)
-	model["empty"] = ""
-	model["projectname"] = projectname
-	model["fullprojectname"] = fullProjectname
-
-	// 创建项目文件夹
-	os.Mkdir(projectname, os.ModeDir)
-	tranverseTplDir(templateCreateFs, "template/create", projectname, model)
-
-	// 初始化go项目
-	os.Chdir(projectname)
-	fmt.Println("go mod init " + fullProjectname)
-	exec.Command("go", "mod", "init", fullProjectname).Run()
-	// os.Rename("go.mod", "go.mod.bak")
-	// fmt.Println("go mod tidy")
-	// exec.Command("go", "mod", "tidy").Run()
-	fmt.Println("success")
-}
-
-func cmdApp(args []string) {
-	if len(args) < 3 {
 		panic("unknown appname")
 	}
-	modstr := ""
-	fullProjectname := ""
-	appname := ""
-	// submod := false
-	if _, err := os.Stat("go.mod"); err == nil {
-		// 子模块，从go.mod中获取项目名，从cmd中获取appname
-		// submod = true
-		modbyte, _ := ioutil.ReadFile("go.mod")
-		modstr = strings.TrimSpace(string(modbyte))
-		appname = args[2]
-		fullProjectname = strings.TrimSpace(strings.TrimPrefix(strings.Split(modstr, "\n")[0], "module ")) + "/" + appname
-		if strings.LastIndex(appname, "/") > 0 {
-			appname = appname[strings.LastIndex(appname, "/")+1:]
-			fullProjectname = args[2]
-		}
-		// if _, err := os.Stat("app"); err != nil {
-		// 	os.Mkdir("app", os.ModeDir)
-		// }
-	} else {
-		// 独立项目，从cmd中获取项目名和appname
-		// submod = false
-		fullProjectname = args[2]
-		appname = fullProjectname[strings.LastIndex(fullProjectname, "/")+1:]
-	}
+	// 独立项目，从cmd中获取项目名和appname
+	// submod = false
+	fullProjectname := args[2]
+	appname := fullProjectname[strings.LastIndex(fullProjectname, "/")+1:]
 	projectname := fullProjectname[strings.LastIndex(fullProjectname, "/")+1:]
 
 	fmt.Printf("fullprojectname: %s\n", fullProjectname)
-	fmt.Printf("projectname: %s\n", projectname)
-	fmt.Printf("appname: %s\n", appname)
+	fmt.Printf("projectname:     %s\n", projectname)
+	fmt.Printf("appname:         %s\n", appname)
 
 	model := make(map[string]string)
 	model["empty"] = ""
@@ -156,28 +101,21 @@ func cmdApp(args []string) {
 	model["projectname"] = projectname
 	model["fullprojectname"] = fullProjectname
 
-	// if submod {
-	// 	// 创建项目文件夹
-	// 	os.Chdir("app")
-	// }
 	os.Mkdir(appname, os.ModeDir)
-	tranverseTplDir(templateAppFs, "template/app", appname, model)
+	tranverseTplDir(templateCreateFs, "template/create", appname, model)
 
 	// 初始化app项目
 	os.Chdir(appname)
-	fmt.Println("go mod init " + fullProjectname)
+	fmt.Println("[exec] go mod init " + fullProjectname)
 	exec.Command("go", "mod", "init", fullProjectname).Run()
-	fmt.Println("go mod tidy")
+	fmt.Println("[exec] go mod tidy")
 	exec.Command("go", "mod", "tidy").Run()
 
 	// 加入workspace
 	os.Chdir("../")
 	if _, err := os.Stat("go.work"); err == nil {
-		fmt.Println("go work use ./" + appname)
+		fmt.Println("[exec] go work use ./" + appname)
 		exec.Command("go", "work", "use", "./"+appname).Run()
-	} else {
-		fmt.Println("go work init ./" + appname)
-		exec.Command("go", "work", "init", "./"+appname).Run()
 	}
 	fmt.Println("success")
 }
