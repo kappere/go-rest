@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/kappere/go-rest/core/config/conf"
-	"github.com/kappere/gotask"
+	"github.com/kappere/go-rest/core/task"
 )
 
 func InitLogger(logConfig conf.LogConfig, appName string) {
@@ -33,5 +33,5 @@ func InitLogger(logConfig conf.LogConfig, appName string) {
 		prevLogFile = logFile
 	}
 	archiveLogFunc()
-	gotask.NewTaskFunc("0 0 0 * * ?", "LogArchive", archiveLogFunc)
+	task.NewTaskFunc("0 0 0 * * ?", "LogArchive", archiveLogFunc)
 }

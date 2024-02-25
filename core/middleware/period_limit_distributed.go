@@ -18,16 +18,20 @@ import (
 )
 
 // PeriodLimit 分布式限流中间件
-func PeriodLimitMiddleware(periodLimitConfig conf.PeriodLimitConfig, redisConfig conf.RedisConfig, opts ...PeriodOption) (gin.HandlerFunc, func()) {
+func PeriodLimitDistributedMiddleware(periodLimitConfig conf.PeriodLimitConfig, redisConfig conf.RedisConfig, opts ...PeriodOption) (gin.HandlerFunc, func()) {
 	var limitStore *redis.Client
 	var clusterLimitStore *redis.ClusterClient
 	addrLen := len(strings.Split(redisConfig.Addr, ","))
+	var err error
 	if addrLen > 1 {
-		limitStore = rest_redis.NewRedisClient(redisConfig)
+		limitStore, err = rest_redis.NewRedisClient(redisConfig)
 	} else if addrLen == 1 {
-		clusterLimitStore = rest_redis.NewRedisClusterClient(redisConfig)
+		clusterLimitStore, err = rest_redis.NewRedisClusterClient(redisConfig)
 	}
-	limit := newPeriodLimit(periodLimitConfig.Period, periodLimitConfig.Quota, limitStore, clusterLimitStore, "REST_PERIOD_LIMIT")
+	if err != nil {
+		panic(err)
+	}
+	limit := newPeriodLimit(periodLimitConfig.Period, periodLimitConfig.Quota, limitStore, clusterLimitStore, "REST_PERIOD_LIMIT", opts...)
 	return func(c *gin.Context) {
 			r, err := limit.take(c.Request.RequestURI)
 			if err != nil {
@@ -59,7 +63,7 @@ elseif current < limit then
 elseif current == limit then
     return 2
 else
-    return 0
+    return 3
 end`
 
 const (
@@ -71,10 +75,6 @@ const (
 	HitQuota
 	// OverQuota means passed the quota.
 	OverQuota
-
-	internalOverQuota = 0
-	internalAllowed   = 1
-	internalHitQuota  = 2
 )
 
 // ErrUnknownCode is an error that represents unknown status code.
@@ -137,21 +137,12 @@ func (h *PeriodLimit) take(key string) (int, error) {
 		)
 	}
 
-	code, err := resp.Int64()
+	code, err := resp.Int()
 	if err != nil {
 		return Unknown, ErrUnknownCode
 	}
 
-	switch code {
-	case internalOverQuota:
-		return OverQuota, nil
-	case internalAllowed:
-		return Allowed, nil
-	case internalHitQuota:
-		return HitQuota, nil
-	default:
-		return Unknown, ErrUnknownCode
-	}
+	return code, nil
 }
 
 func (h *PeriodLimit) calcExpireSeconds() int {

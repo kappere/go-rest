@@ -4,7 +4,7 @@ app:
   debug: false
   profile: prod
 http:
-  port: 8080
+  port: 80
   session:
     # 存储类型：memory/redis/cookie
     storetype: memory
@@ -20,6 +20,8 @@ http:
   periodlimit:
     # 默认关闭
     enable: false
+    # 默认非分布式限流
+    distributed: false
     # 滑动窗口大小（秒）
     period: 5
     # 窗口中单个资源最大请求数

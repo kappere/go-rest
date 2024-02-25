@@ -1,5 +1,5 @@
 app:
-  name: {{.appname_}}
+  name: {{.appname}}
   debug: true
   profile: dev
 http:

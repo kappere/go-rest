@@ -141,9 +141,14 @@ func setupMiddleware(server *Server, baseConfig config.BaseConfig) {
 
 	// 限流
 	if baseConfig.Http.PeriodLimit.Enable {
-		limit, close := middleware.PeriodLimitMiddleware(baseConfig.Http.PeriodLimit, baseConfig.Redis)
-		server.Engine.Use(limit)
-		server.AddClose(close)
+		if baseConfig.Http.PeriodLimit.Distributed {
+			limit, close := middleware.PeriodLimitDistributedMiddleware(baseConfig.Http.PeriodLimit, baseConfig.Redis)
+			server.Engine.Use(limit)
+			server.AddClose(close)
+		} else {
+			limit := middleware.PeriodLimitLocalMiddleware(baseConfig.Http.PeriodLimit)
+			server.Engine.Use(limit)
+		}
 		slog.Info("[middleware] PeriodLimitMiddleware")
 	}
 }

@@ -4,13 +4,13 @@ import (
 	"log/slog"
 
 	"github.com/go-redis/redis/v8"
+	"{{.fullprojectname}}/internal/config"
+	"{{.fullprojectname}}/internal/model"
 	"github.com/kappere/go-rest/core/db"
 	gorest_redis "github.com/kappere/go-rest/core/redis"
 	"github.com/kappere/go-rest/core/tool/redislock"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"{{.fullprojectname}}/internal/config"
-	"{{.fullprojectname}}/internal/model"
 )
 
 type DbContext struct {
@@ -22,7 +22,10 @@ type DbContext struct {
 }
 
 func NewDbContext(c *config.Config) *DbContext {
-	redisClient := gorest_redis.NewRedisClient(c.Redis)
+	redisClient, err := gorest_redis.NewRedisClient(c.Redis)
+	if err != nil {
+		panic(err)
+	}
 
 	c.Database.Dialector = mysql.Open(c.Database.Dsn)
 	database := db.NewDatabase(c.Database, c.App.Debug)

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 
@@ -9,9 +10,9 @@ import (
 	"github.com/kappere/go-rest/core/config/conf"
 )
 
-func NewRedisClient(redisConfig conf.RedisConfig) *redis.Client {
+func NewRedisClient(redisConfig conf.RedisConfig) (*redis.Client, error) {
 	if redisConfig.Addr == "" {
-		return nil
+		return nil, errors.New("empty redis address")
 	}
 	var rdb *redis.Client
 	addrs := strings.Split(redisConfig.Addr, ",")
@@ -24,14 +25,14 @@ func NewRedisClient(redisConfig conf.RedisConfig) *redis.Client {
 
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
-		slog.Error("Init redis failed!", "error", err)
+		return nil, err
 	}
-	return rdb
+	return rdb, nil
 }
 
-func NewRedisClusterClient(redisConfig conf.RedisConfig) *redis.ClusterClient {
+func NewRedisClusterClient(redisConfig conf.RedisConfig) (*redis.ClusterClient, error) {
 	if redisConfig.Addr == "" {
-		return nil
+		return nil, errors.New("empty redis address")
 	}
 	var clusterRdb *redis.ClusterClient
 	addrs := strings.Split(redisConfig.Addr, ",")
@@ -47,7 +48,7 @@ func NewRedisClusterClient(redisConfig conf.RedisConfig) *redis.ClusterClient {
 		return shard.Ping(ctx).Err()
 	})
 	if err != nil {
-		slog.Error("Init redis cluster failed!", "error", err)
+		return nil, err
 	}
-	return clusterRdb
+	return clusterRdb, nil
 }

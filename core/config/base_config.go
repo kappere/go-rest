@@ -35,9 +35,10 @@ var DefaultBaseConfig = BaseConfig{
 			StoreType: "memory",
 		},
 		PeriodLimit: conf.PeriodLimitConfig{
-			Enable: false,
-			Period: 5,
-			Quota:  100,
+			Enable:      false,
+			Distributed: false,
+			Period:      5,
+			Quota:       100,
 		},
 		OAuth2: conf.OAuth2Config{
 			Enable:   false,

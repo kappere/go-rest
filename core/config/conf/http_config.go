@@ -34,9 +34,10 @@ type SessionConfig struct {
 }
 
 type PeriodLimitConfig struct {
-	Enable bool
-	Period int
-	Quota  int
+	Enable      bool
+	Distributed bool
+	Period      int
+	Quota       int
 }
 
 type OAuth2Config struct {
